@@ -11,3 +11,6 @@ Kode Pos: Kelurahan A | Kelurahan B | Kelurahan C, Kecamatan, Kabupaten/Kota, Pr
 Kode Pos: Kecamatan
 
 Pakai Javascript untuk link: Kecamatan -> Kabupaten -> Provinsi
+
+#### Demo
+https://www.nomorsuper.com/info/kode-pos
