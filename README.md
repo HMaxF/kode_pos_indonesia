@@ -1,9 +1,9 @@
 # Daftar Kode Pos Indonesia
 
 ## Terakhir update data
-13 Agustus 2026
-kodepos_small_lookup.json
-kodepos_small_v1.0.json
+13 Agustus 2026  
+kodepos_small_lookup.json  
+kodepos_small_v1.0.json  
 
 
 ## Format data
