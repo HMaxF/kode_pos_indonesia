@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookup kode pos - nomorsuper.com</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 1rem;
+        }
+        h1 {
+            margin-top: 0;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            max-width: 720px;
+        }
+        select, input[type="text"], button {
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+        section {
+            margin-top: 2rem;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            color: white;
+            margin-top: 1rem;
+        }
+        table thead th {
+            font-weight: bold;
+            background-color: #1e2834;
+        }
+        table tbody > tr:nth-child(odd) {
+            background-color: black;
+        }
+        table tbody > tr:nth-child(even) {
+            background-color: #222;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        .status {
+            margin-top: 0.5rem;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Lookup Kode Pos Indonesia</h1>
+
+    <p id="status">Memuat data...</p>
+
+    <section>
+        <h2>Cari berdasarkan wilayah</h2>
+        <div class="form-grid">
+            <span>Provinsi</span>
+            <select id="select-provinsi" onchange="onProvinsiChanged()">
+                <option value="">- Pilih provinsi -</option>
+            </select>
+
+            <span>Kabupaten / Kota</span>
+            <select id="select-kabupaten" onchange="onKabupatenChanged()">
+                <option value="">- Pilih kabupaten / kota -</option>
+            </select>
+
+            <span>Kecamatan</span>
+            <select id="select-kecamatan" onchange="onKecamatanChanged()">
+                <option value="">- Pilih kecamatan -</option>
+            </select>
+        </div>
+
+        <p class="status" id="wilayah-result-count"></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kode Pos</th>
+                    <th id="th-kelurahan-wilayah">Kelurahan / Desa</th>
+                    <th>Kecamatan</th>
+                    <th>Kabupaten / Kota</th>
+                    <th>Provinsi</th>
+                </tr>
+            </thead>
+            <tbody id="table-wilayah">
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Cari berdasarkan kode pos</h2>
+        <div class="form-grid">
+            <span>Kode Pos</span>
+            <div>
+                <input type="text" id="input-kodepos" inputmode="numeric" maxlength="5" placeholder="contoh: 23652">
+                <button onclick="onKodePosSearch()">Cari</button>
+            </div>
+        </div>
+
+        <p class="status" id="kodepos-result-count"></p>
+        <table>
+            <thead>
+                <tr>
+                    <th id="th-kelurahan-kodepos">Kelurahan / Desa</th>
+                    <th>Kecamatan</th>
+                    <th>Kabupaten / Kota</th>
+                    <th>Provinsi</th>
+                </tr>
+            </thead>
+            <tbody id="table-kodepos">
+            </tbody>
+        </table>
+    </section>
+
+    <script>
+        const DEFAULT_JSON_FILENAME = 'kodepos_small_v1.0.json';
+
+        let JSON_FILENAME = DEFAULT_JSON_FILENAME;
+        let data = null;
+        let IS_SMALL = false;
+        let PROV_CODE_TO_NAME = {};
+
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const fileParam = params.get('file');
+            if (fileParam) {
+                JSON_FILENAME = fileParam;
+            }
+
+            document.getElementById('input-kodepos').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    onKodePosSearch();
+                }
+            });
+            loadData();
+        });
+
+        function loadData() {
+            fetch(JSON_FILENAME)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(json => {
+                    if (json.PROVINSI_SORTED_ALPHABETICALLY == null || Object.keys(json.PROVINSI_SORTED_ALPHABETICALLY).length < 1) {
+                        throw new Error('response data is invalid');
+                    }
+                    data = json;
+
+                    IS_SMALL = !!data.KODE_POS_BY_KECAMATAN_CODE;
+
+                    for (const [name, code] of Object.entries(data.PROVINSI_SORTED_ALPHABETICALLY)) {
+                        PROV_CODE_TO_NAME[code] = name;
+                    }
+
+                    if (IS_SMALL) {
+                        document.getElementById('th-kelurahan-wilayah').style.display = 'none';
+                        document.getElementById('th-kelurahan-kodepos').style.display = 'none';
+                    }
+
+                    populateProvinsi();
+
+                    document.getElementById('status').textContent =
+                        `Data ${JSON_FILENAME} berhasil dimuat (${Object.keys(data.PROVINSI_SORTED_ALPHABETICALLY).length} provinsi).`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('status').textContent =
+                        `Gagal memuat ${JSON_FILENAME}. Pastikan halaman dibuka lewat web server (HTTP/HTTPS), bukan file://`;
+                });
+        }
+
+        function populateProvinsi() {
+            const selectProvinsi = document.getElementById('select-provinsi');
+            selectProvinsi.innerHTML = '<option value="">- Pilih provinsi -</option>';
+
+            Object.entries(data.PROVINSI_SORTED_ALPHABETICALLY).forEach(([name, code]) => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = name;
+                selectProvinsi.appendChild(option);
+            });
+
+            onProvinsiChanged();
+        }
+
+        function onProvinsiChanged() {
+            const provCode = document.getElementById('select-provinsi').value;
+            const selectKabupaten = document.getElementById('select-kabupaten');
+            selectKabupaten.innerHTML = '<option value="">- Pilih kabupaten / kota -</option>';
+
+            if (!provCode) {
+                clearKecamatan();
+                return;
+            }
+
+            data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode].forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = provCode + pad2(index + 1);
+                option.textContent = name;
+                selectKabupaten.appendChild(option);
+            });
+
+            onKabupatenChanged();
+        }
+
+        function onKabupatenChanged() {
+            const kabCode = document.getElementById('select-kabupaten').value;
+            const selectKecamatan = document.getElementById('select-kecamatan');
+            selectKecamatan.innerHTML = '<option value="">- Pilih kecamatan -</option>';
+
+            if (!kabCode) {
+                renderWilayahTable('');
+                return;
+            }
+
+            data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode].forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = kabCode + pad2(index + 1);
+                option.textContent = name;
+                selectKecamatan.appendChild(option);
+            });
+
+            onKecamatanChanged();
+        }
+
+        function onKecamatanChanged() {
+            renderWilayahTable(document.getElementById('select-kecamatan').value);
+        }
+
+        function clearKecamatan() {
+            document.getElementById('select-kecamatan').innerHTML = '<option value="">- Pilih kecamatan -</option>';
+            renderWilayahTable('');
+        }
+
+        function renderWilayahTable(kecCode) {
+            const tbody = document.getElementById('table-wilayah');
+            const countEl = document.getElementById('wilayah-result-count');
+            tbody.innerHTML = '';
+
+            if (!kecCode) {
+                countEl.textContent = '';
+                return;
+            }
+
+            const kabCode = kecCode.slice(0, 4);
+            const provCode = kecCode.slice(0, 2);
+            const provinsiName = PROV_CODE_TO_NAME[parseInt(provCode, 10)];
+            const kabupatenName = data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode][parseInt(kabCode.slice(2), 10) - 1];
+            const kecamatanName = data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode][parseInt(kecCode.slice(4), 10) - 1];
+
+            const rows = [];
+            if (IS_SMALL) {
+                const kodeposList = data.KODE_POS_BY_KECAMATAN_CODE[kecCode] || [];
+                kodeposList.forEach(pos => {
+                    rows.push(`<tr>
+                            <td>${pos}</td>
+                            <td>${titleCase(kecamatanName)}</td>
+                            <td>${titleCase(kabupatenName)}</td>
+                            <td>${titleCase(provinsiName)}</td>
+                        </tr>`);
+                });
+                countEl.textContent = `${kodeposList.length} kode pos ditemukan.`;
+            } else {
+                const kelurahanNames = data.KELURAHAN_NAME_BY_KECAMATAN_CODE[kecCode] || [];
+                kelurahanNames.forEach((name, index) => {
+                    const kelCode = kecCode + pad3(index + 1);
+                    const kodeposList = data.KODE_POS_BY_KELURAHAN_CODE[kelCode] || [];
+                    kodeposList.forEach(pos => {
+                        rows.push(`<tr>
+                                <td>${pos}</td>
+                                <td>${titleCase(name)}</td>
+                                <td>${titleCase(kecamatanName)}</td>
+                                <td>${titleCase(kabupatenName)}</td>
+                                <td>${titleCase(provinsiName)}</td>
+                            </tr>`);
+                    });
+                });
+                countEl.textContent = `${kelurahanNames.length} kelurahan / desa, ${rows.length} kode pos ditemukan.`;
+            }
+
+            tbody.innerHTML = rows.join('');
+        }
+
+        function onKodePosSearch() {
+            const pos = document.getElementById('input-kodepos').value.trim();
+            const tbody = document.getElementById('table-kodepos');
+            const countEl = document.getElementById('kodepos-result-count');
+            tbody.innerHTML = '';
+
+            if (!pos) {
+                countEl.textContent = '';
+                return;
+            }
+
+            const raw = data.KODE_POS_TO_KECAMATAN[pos];
+            if (raw == null) {
+                countEl.textContent = `Kode pos ${pos} tidak ditemukan.`;
+                return;
+            }
+            const kecamatanCodes = Array.isArray(raw) ? raw : [raw];
+
+            const rows = [];
+            kecamatanCodes.forEach(rawCode => {
+                const kecCode = String(rawCode).padStart(6, '0');
+                const kabCode = kecCode.slice(0, 4);
+                const provCode = kecCode.slice(0, 2);
+                const provinsiName = PROV_CODE_TO_NAME[parseInt(provCode, 10)];
+                const kabupatenName = data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode][parseInt(kabCode.slice(2), 10) - 1];
+                const kecamatanName = data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode][parseInt(kecCode.slice(4), 10) - 1];
+
+                if (IS_SMALL) {
+                    const kodeposList = data.KODE_POS_BY_KECAMATAN_CODE[kecCode] || [];
+                    if (kodeposList.includes(Number(pos))) {
+                        rows.push(`<tr>
+                                <td>${titleCase(kecamatanName)}</td>
+                                <td>${titleCase(kabupatenName)}</td>
+                                <td>${titleCase(provinsiName)}</td>
+                            </tr>`);
+                    }
+                } else {
+                    const kelurahanNames = data.KELURAHAN_NAME_BY_KECAMATAN_CODE[kecCode] || [];
+                    kelurahanNames.forEach((name, index) => {
+                        const kelCode = kecCode + pad3(index + 1);
+                        const kodeposList = data.KODE_POS_BY_KELURAHAN_CODE[kelCode] || [];
+                        if (kodeposList.includes(pos)) {
+                            rows.push(`<tr>
+                                    <td>${titleCase(name)}</td>
+                                    <td>${titleCase(kecamatanName)}</td>
+                                    <td>${titleCase(kabupatenName)}</td>
+                                    <td>${titleCase(provinsiName)}</td>
+                                </tr>`);
+                        }
+                    });
+                }
+            });
+
+            tbody.innerHTML = rows.join('');
+            countEl.textContent = `Ditemukan ${rows.length} ${IS_SMALL ? 'kecamatan' : 'kelurahan / desa'} untuk kode pos ${pos}.`;
+        }
+
+        function pad2(num) {
+            return String(num).padStart(2, '0');
+        }
+
+        function pad3(num) {
+            return String(num).padStart(3, '0');
+        }
+
+        function titleCase(txt) {
+            return txt.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+    </script>
+
+</body>
+</html>
