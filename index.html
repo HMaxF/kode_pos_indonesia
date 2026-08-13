@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lookup kode pos - nomorsuper.com</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            background-attachment: fixed;
+            color: #eef2f7;
+            font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+            padding: 1rem;
+        }
+        h1 {
+            margin: 0 0 0.25rem;
+            font-size: 1.6rem;
+            text-align: center;
+            background: linear-gradient(90deg, #38ef7d, #4facfe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        h2 {
+            margin: 0 0 1rem;
+            font-size: 1.15rem;
+            color: #aee8ff;
+            border-left: 4px solid #38ef7d;
+            padding-left: 0.6rem;
+        }
+        #status {
+            text-align: center;
+            color: #cfd8e3;
+            margin: 0.75rem 0 0.5rem;
+        }
+        section {
+            margin: 1.5rem auto;
+            max-width: 960px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            max-width: 720px;
+            align-items: center;
+        }
+        .form-grid > span {
+            font-weight: 600;
+            color: #cfd8e3;
+        }
+        select, input[type="text"], button {
+            padding: 0.6rem 0.75rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            outline: none;
+        }
+        select:focus, input[type="text"]:focus {
+            border-color: #38ef7d;
+            box-shadow: 0 0 0 3px rgba(56, 238, 125, 0.18);
+        }
+        select option {
+            background: #1b2a38;
+            color: #fff;
+        }
+        button {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            color: #06251f;
+        }
+        button:hover {
+            filter: brightness(1.1);
+        }
+        .form-grid > div {
+            display: flex;
+            gap: 8px;
+        }
+        #input-kodepos {
+            flex: 1;
+            min-width: 0;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.30);
+        }
+        thead th {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            font-weight: 700;
+            padding: 0.6rem 0.5rem;
+            text-align: left;
+            font-size: 0.88rem;
+        }
+        tbody tr:nth-child(odd) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        tbody tr:nth-child(even) {
+            background: rgba(0, 0, 0, 0.25);
+        }
+        tbody tr:hover {
+            background: rgba(56, 238, 125, 0.12);
+        }
+        th, td {
+            padding: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: left;
+            vertical-align: top;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .status {
+            margin: 0.75rem 0 0.25rem;
+            color: #b9c4d0;
+            font-size: 0.9rem;
+        }
+        .combined {
+            display: none;
+        }
+
+        @media (max-width: 500px) {
+            body {
+                padding: 0.75rem;
+            }
+            h1 {
+                font-size: 1.35rem;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-grid > div {
+                flex-direction: column;
+            }
+            .form-grid input, .form-grid button {
+                width: 100%;
+            }
+            th, td {
+                padding: 0.45rem;
+                font-size: 0.85rem;
+            }
+            .combined {
+                display: table-cell;
+            }
+            .kec, .kab, .prov {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Cari kodepos di seluruh Indonesia</h1>
+
+    <p id="status">Memuat data...</p>
+
+    <section>
+        <h2>Cari kodepos berdasarkan wilayah</h2>
+        <div class="form-grid">
+            <span>Provinsi</span>
+            <select id="select-provinsi" onchange="onProvinsiChanged()">
+                <option value="">- Pilih provinsi -</option>
+            </select>
+
+            <span>Kabupaten / Kota</span>
+            <select id="select-kabupaten" onchange="onKabupatenChanged()">
+                <option value="">- Pilih kabupaten / kota -</option>
+            </select>
+
+            <span>Kecamatan</span>
+            <select id="select-kecamatan" onchange="onKecamatanChanged()">
+                <option value="">- Pilih kecamatan -</option>
+            </select>
+        </div>
+
+        <p class="status" id="wilayah-result-count"></p>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Kode Pos</th>
+                    <th>Kelurahan<br>Desa</th>
+                    <th class="combined">Wilayah</th>
+                    <th class="kec">Kecamatan</th>
+                    <th class="kab">Kabupaten<br>Kota</th>
+                    <th class="prov">Provinsi</th>
+                </tr>
+            </thead>
+            <tbody id="table-wilayah">
+            </tbody>
+        </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Cari wilayah berdasarkan kode pos</h2>
+        <div class="form-grid">
+            <span>Kode Pos</span>
+            <div>
+                <input type="text" id="input-kodepos" inputmode="numeric" maxlength="5" placeholder="contoh: 23652">
+                <button onclick="onKodePosSearch()">Cari</button>
+            </div>
+        </div>
+
+        <p class="status" id="kodepos-result-count"></p>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Kode Pos</th>
+                    <th>Kelurahan<br>Desa</th>
+                    <th class="combined">Wilayah</th>
+                    <th class="kec">Kecamatan</th>
+                    <th class="kab">Kabupaten<br>Kota</th>
+                    <th class="prov">Provinsi</th>
+                </tr>
+            </thead>
+            <tbody id="table-kodepos">
+            </tbody>
+        </table>
+        </div>
+    </section>
+
+    <script>
+        const DEFAULT_JSON_FILENAME = 'kodepos_full_v1.1.json';
+
+        let JSON_FILENAME = DEFAULT_JSON_FILENAME;
+        let data = null;
+        let PROV_CODE_TO_NAME = {};
+        let KODEPOS_LOOKUP = {};
+
+        window.addEventListener('load', () => {
+            const params = new URLSearchParams(window.location.search);
+            const fileParam = params.get('file');
+            if (fileParam) {
+                JSON_FILENAME = fileParam;
+            }
+
+            document.getElementById('input-kodepos').addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    onKodePosSearch();
+                }
+            });
+            loadData();
+        });
+
+        function loadData() {
+            fetch(JSON_FILENAME)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(json => {
+                    if (json.PROVINSI_SORTED_ALPHABETICALLY == null || Object.keys(json.PROVINSI_SORTED_ALPHABETICALLY).length < 1) {
+                        throw new Error('response data is invalid');
+                    }
+                    data = json;
+
+                    for (const [name, code] of Object.entries(data.PROVINSI_SORTED_ALPHABETICALLY)) {
+                        PROV_CODE_TO_NAME[code] = name;
+                    }
+
+                    buildKodeposLookup();
+                    populateProvinsi();
+
+                    document.getElementById('status').textContent =
+                        `Data ${JSON_FILENAME} berhasil dimuat (${Object.keys(data.PROVINSI_SORTED_ALPHABETICALLY).length} provinsi).`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('status').textContent =
+                        `Gagal memuat ${JSON_FILENAME}. Pastikan halaman dibuka lewat web server (HTTP/HTTPS), bukan file://`;
+                });
+        }
+
+        function buildKodeposLookup() {
+            KODEPOS_LOOKUP = {};
+            for (const [kecCode, kelurahanNames] of Object.entries(data.KELURAHAN_NAME_BY_KECAMATAN_CODE)) {
+                const kelurahanKodepos = data.KELURAHAN_KODEPOS_BY_KECAMATAN_CODE[kecCode] || [];
+                kelurahanNames.forEach((name, index) => {
+                    const pos = kelurahanKodepos[index];
+                    const posList = Array.isArray(pos) ? pos : [pos];
+                    posList.forEach(p => {
+                        (KODEPOS_LOOKUP[p] = KODEPOS_LOOKUP[p] || []).push({ kecCode, name });
+                    });
+                });
+            }
+        }
+
+        function populateProvinsi() {
+            const selectProvinsi = document.getElementById('select-provinsi');
+            selectProvinsi.innerHTML = '<option value="">- Pilih provinsi -</option>';
+
+            Object.entries(data.PROVINSI_SORTED_ALPHABETICALLY).forEach(([name, code]) => {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = name;
+                selectProvinsi.appendChild(option);
+            });
+
+            onProvinsiChanged();
+        }
+
+        function onProvinsiChanged() {
+            const provCode = document.getElementById('select-provinsi').value;
+            const selectKabupaten = document.getElementById('select-kabupaten');
+            selectKabupaten.innerHTML = '<option value="">- Pilih kabupaten / kota -</option>';
+
+            if (!provCode) {
+                clearKecamatan();
+                return;
+            }
+
+            data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode].forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = provCode + pad2(index + 1);
+                option.textContent = name;
+                selectKabupaten.appendChild(option);
+            });
+
+            onKabupatenChanged();
+        }
+
+        function onKabupatenChanged() {
+            const kabCode = document.getElementById('select-kabupaten').value;
+            const selectKecamatan = document.getElementById('select-kecamatan');
+            selectKecamatan.innerHTML = '<option value="">- Pilih kecamatan -</option>';
+
+            if (!kabCode) {
+                renderWilayahTable('');
+                return;
+            }
+
+            data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode].forEach((name, index) => {
+                const option = document.createElement('option');
+                option.value = kabCode + pad2(index + 1);
+                option.textContent = name;
+                selectKecamatan.appendChild(option);
+            });
+
+            onKecamatanChanged();
+        }
+
+        function onKecamatanChanged() {
+            renderWilayahTable(document.getElementById('select-kecamatan').value);
+        }
+
+        function clearKecamatan() {
+            document.getElementById('select-kecamatan').innerHTML = '<option value="">- Pilih kecamatan -</option>';
+            renderWilayahTable('');
+        }
+
+        function renderWilayahTable(kecCode) {
+            const tbody = document.getElementById('table-wilayah');
+            const countEl = document.getElementById('wilayah-result-count');
+            tbody.innerHTML = '';
+
+            if (!kecCode) {
+                countEl.textContent = '';
+                return;
+            }
+
+            const kabCode = kecCode.slice(0, 4);
+            const provCode = kecCode.slice(0, 2);
+            const provinsiName = PROV_CODE_TO_NAME[parseInt(provCode, 10)];
+            const kabupatenName = data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode][parseInt(kabCode.slice(2), 10) - 1];
+            const kecamatanName = data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode][parseInt(kecCode.slice(4), 10) - 1];
+
+            const kelurahanNames = data.KELURAHAN_NAME_BY_KECAMATAN_CODE[kecCode] || [];
+            const kelurahanKodepos = data.KELURAHAN_KODEPOS_BY_KECAMATAN_CODE[kecCode] || [];
+            const rows = kelurahanNames
+                .map((name, index) => {
+                    const pos = kelurahanKodepos[index];
+                    const posList = Array.isArray(pos) ? pos : (pos != null ? [pos] : []);
+                    const sortPos = posList.length ? Math.min(...posList.map(Number)) : Infinity;
+                    const posText = Array.isArray(pos) ? pos.join(', ') : (pos != null ? pos : '');
+                    return { sortPos, posText, name };
+                })
+                .sort((a, b) => a.sortPos - b.sortPos || a.name.localeCompare(b.name))
+                .map((row, index) => `<tr>
+                    <td>${index + 1}</td>
+                    <td>${row.posText}</td>
+                    <td>${titleCase(row.name)}</td>
+                    <td class="combined">${titleCase(kecamatanName)}<br>${titleCase(kabupatenName)}<br>${titleCase(provinsiName)}</td>
+                    <td class="kec">${titleCase(kecamatanName)}</td>
+                    <td class="kab">${titleCase(kabupatenName)}</td>
+                    <td class="prov">${titleCase(provinsiName)}</td>
+                </tr>`);
+
+            tbody.innerHTML = rows.join('');
+            countEl.textContent =
+                `${kelurahanNames.length} kelurahan / desa.`;
+        }
+
+        function onKodePosSearch() {
+            const pos = document.getElementById('input-kodepos').value.trim();
+            const tbody = document.getElementById('table-kodepos');
+            const countEl = document.getElementById('kodepos-result-count');
+            tbody.innerHTML = '';
+
+            if (!pos) {
+                countEl.textContent = '';
+                return;
+            }
+
+            const matches = KODEPOS_LOOKUP[pos];
+            if (matches == null || matches.length === 0) {
+                countEl.textContent = `Kode pos ${pos} tidak ditemukan.`;
+                return;
+            }
+
+            const rows = [];
+            matches.forEach((match, index) => {
+                const counter = index + 1;
+                const kecCode = match.kecCode;
+                const kabCode = kecCode.slice(0, 4);
+                const provCode = kecCode.slice(0, 2);
+                const provinsiName = PROV_CODE_TO_NAME[parseInt(provCode, 10)];
+                const kabupatenName = data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode][parseInt(kabCode.slice(2), 10) - 1];
+                const kecamatanName = data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode][parseInt(kecCode.slice(4), 10) - 1];
+
+                rows.push(`<tr>
+                        <td>${counter}</td>
+                        <td>${pos}</td>
+                        <td>${titleCase(match.name)}</td>
+                        <td class="combined">${titleCase(kecamatanName)}<br>${titleCase(kabupatenName)}<br>${titleCase(provinsiName)}</td>
+                        <td class="kec">${titleCase(kecamatanName)}</td>
+                        <td class="kab">${titleCase(kabupatenName)}</td>
+                        <td class="prov">${titleCase(provinsiName)}</td>
+                    </tr>`);
+            });
+
+            tbody.innerHTML = rows.join('');
+            countEl.textContent = `Ditemukan ${rows.length} kelurahan / desa untuk kode pos ${pos}.`;
+        }
+
+        function pad2(num) {
+            return String(num).padStart(2, '0');
+        }
+
+        function titleCase(txt) {
+            return txt.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+    </script>
+
+</body>
+</html>
