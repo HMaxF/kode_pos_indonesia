@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lookup kode pos - nomorsuper.com</title>
+    <title>Cari kode pos seluruh Indonesia - nomorsuper.com</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,6 +16,10 @@
             color: #eef2f7;
             font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
             padding: 1rem;
+        }
+        a {
+            color: yellow;
+            text-decoration: none;
         }
         h1 {
             margin: 0 0 0.25rem;
@@ -173,6 +177,36 @@
 
     <h1>Cari kodepos di seluruh Indonesia</h1>
 
+    <section>
+        <h2>Statistik</h2>
+        <table>
+            <tr style="color: #000; background-color: skyblue">
+                <th>Metrik</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td>Provinsi</td>
+                <td>38</td>
+            </tr>
+            <tr>
+                <td>Kabupaten / Kota</td>
+                <td>514</td>
+            </tr>
+            <tr>
+                <td>Kecamatan</td>
+                <td>7,277</td>
+            </tr>
+            <tr>
+                <td>Kelurahan / Desa</td>
+                <td>83,761</td>
+            </tr>
+            <tr>
+                <td>Kodepos</td>
+                <td>10,670</td>
+            </tr>
+        </table>
+    </section>
+
     <p id="status">Memuat data...</p>
 
     <section>
@@ -219,7 +253,7 @@
         <div class="form-grid">
             <span>Kode Pos</span>
             <div>
-                <input type="text" id="input-kodepos" inputmode="numeric" maxlength="5" placeholder="contoh: 23652">
+                <input type="text" id="input-kodepos" inputmode="numeric" maxlength="5" placeholder="contoh: 10710">
                 <button onclick="onKodePosSearch()">Cari</button>
             </div>
         </div>
@@ -243,6 +277,12 @@
         </table>
         </div>
     </section>
+
+    <footer style="margin: 3.0rem 0; text-align: center; border-top: 1px solid #aaa;">
+        <div style="margin: 1.0rem;">Untuk <a href="https://www.nomorsuper.com" target="_blank">nomorsuper.com</a></div>
+        <hr>
+        <div style="margin: 1.0rem;">Created by: <a href="https://quick.work" target="_blank">Quick.Work</a></div>
+    </footer>
 
     <script>
         const DEFAULT_JSON_FILENAME = 'kodepos_full_v1.1.json';
