@@ -386,15 +386,6 @@
             </div>
         </div>
 
-        <p class="rel-note">
-            <b>Pembentukan kode:</b> kode kabupaten = kode provinsi + indeks 2 digit; kode kecamatan = kode kabupaten + indeks 2 digit.
-            Contoh: <code>11</code> (Aceh) → <code>1101</code> (Kota Banda Aceh) → <code>110101</code> (Syiah Kuala).
-        </p>
-        <p class="rel-note">
-            <b>Kodepos ↔ wilayah:</b> satu kodepos dapat mencakup kelurahan di satu atau beberapa kecamatan
-            (<code>{ kodepos: [ [kecamatan_code, kelurahan, ...], ... ] }</code>), dan satu kelurahan dapat memiliki
-            lebih dari satu kodepos (jarang, mis. UJUNG GUNUNG ILIR = 34611 &amp; 34614).
-        </p>
     </section>
 
     <footer style="margin: 3.0rem 0; text-align: center; border-top: 1px solid #aaa;">
@@ -618,7 +609,7 @@
             });
 
             tbody.innerHTML = rows.join('');
-            countEl.textContent = `Ditemukan ${rows.length} kelurahan / desa untuk kode pos ${pos}.`;
+            countEl.textContent = `Ditemukan ${rows.length} kelurahan / kecamatan untuk kode pos ${pos}.`;
         }
 
         function buildBebasIndex() {
