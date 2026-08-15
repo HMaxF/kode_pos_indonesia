@@ -97,6 +97,11 @@
             flex: 1;
             min-width: 0;
         }
+        #input-bebas {
+            flex: 1;
+            min-width: 0;
+            text-transform: uppercase;
+        }
         .table-wrap {
             overflow-x: auto;
             margin-top: 1rem;
@@ -143,6 +148,55 @@
         .combined {
             display: none;
         }
+        .rel-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px 10px;
+            margin-top: 1rem;
+        }
+        .rel-node {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            text-align: center;
+            min-width: 130px;
+        }
+        .rel-node .rel-name {
+            font-weight: 700;
+            color: #38ef7d;
+        }
+        .rel-node .rel-code {
+            color: yellow;
+            font-size: 0.8rem;
+            margin-top: 0.15rem;
+        }
+        .rel-node .rel-map {
+            color: #aee8ff;
+            font-size: 0.72rem;
+            margin-top: 0.25rem;
+            word-break: break-word;
+        }
+        .rel-arrow {
+            color: #38ef7d;
+            font-size: 1.5rem;
+            line-height: 1;
+            align-self: center;
+        }
+        .rel-note {
+            margin-top: 1rem;
+            font-size: 0.85rem;
+            color: #b9c4d0;
+            line-height: 1.6;
+        }
+        .rel-note code {
+            color: #ffe08a;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.05rem 0.3rem;
+            border-radius: 4px;
+        }
 
         @media (max-width: 500px) {
             body {
@@ -176,7 +230,7 @@
 <body>
 
     <h1>Cari kodepos di seluruh Indonesia</h1>
-    <h2>Pencarian kodepos tercepat didunia</h2>
+    <div style="text-align: center;">Pencarian kodepos tercepat didunia</div>
 
     <section>
         <h2>Statistik</h2>
@@ -250,6 +304,35 @@
     </section>
 
     <section>
+        <h2 style="margin-top:1.5rem">Cari kodepos berdasarkan nama Kelurahan atau Kecamatan</h2>
+        <div class="form-grid">
+            <span>Kata Kunci</span>
+            <div>
+                <input type="text" id="input-bebas" maxlength="100" placeholder="min. 4 huruf, contoh: NEGLASARI">
+            </div>
+        </div>
+
+        <p class="status" id="bebas-result-count"></p>
+        <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Kode Pos</th>
+                    <th>Kelurahan<br>Desa</th>
+                    <th class="combined">Wilayah</th>
+                    <th class="kec">Kecamatan</th>
+                    <th class="kab">Kabupaten<br>Kota</th>
+                    <th class="prov">Provinsi</th>
+                </tr>
+            </thead>
+            <tbody id="table-bebas">
+            </tbody>
+        </table>
+        </div>
+    </section>
+
+    <section>
         <h2>Cari wilayah berdasarkan kode pos</h2>
         <div class="form-grid">
             <span>Kode Pos</span>
@@ -279,6 +362,41 @@
         </div>
     </section>
 
+    <section>
+        <h2>Data struktur</h2>
+        <div class="rel-diagram">
+            <div class="rel-node">
+                <div class="rel-name">38 PROVINSI</div>
+            </div>
+            <div class="rel-arrow">→</div>
+            <div class="rel-node">
+                <div class="rel-name">514 KABUPATEN / KOTA</div>
+            </div>
+            <div class="rel-arrow">→</div>
+            <div class="rel-node">
+                <div class="rel-name">7,277 KECAMATAN</div>
+            </div>
+            <div class="rel-arrow">→</div>
+            <div class="rel-node">
+                <div class="rel-name">83,761 KELURAHAN / DESA</div>
+            </div>
+            <div class="rel-arrow">→</div>
+            <div class="rel-node">
+                <div class="rel-name">10,670 KODE POS</div>
+            </div>
+        </div>
+
+        <p class="rel-note">
+            <b>Pembentukan kode:</b> kode kabupaten = kode provinsi + indeks 2 digit; kode kecamatan = kode kabupaten + indeks 2 digit.
+            Contoh: <code>11</code> (Aceh) → <code>1101</code> (Kota Banda Aceh) → <code>110101</code> (Syiah Kuala).
+        </p>
+        <p class="rel-note">
+            <b>Kodepos ↔ wilayah:</b> satu kodepos dapat mencakup kelurahan di satu atau beberapa kecamatan
+            (<code>{ kodepos: [ [kecamatan_code, kelurahan, ...], ... ] }</code>), dan satu kelurahan dapat memiliki
+            lebih dari satu kodepos (jarang, mis. UJUNG GUNUNG ILIR = 34611 &amp; 34614).
+        </p>
+    </section>
+
     <footer style="margin: 3.0rem 0; text-align: center; border-top: 1px solid #aaa;">
         <div style="margin: 1.0rem;">Untuk <a href="https://www.nomorsuper.com" target="_blank">nomorsuper.com</a></div>
         <hr>
@@ -292,6 +410,7 @@
         let data = null;
         let PROV_CODE_TO_NAME = {};
         let KECAMATAN_LOOKUP = {};
+        let BEBAS_RECORDS = [];
 
         window.addEventListener('load', () => {
             const params = new URLSearchParams(window.location.search);
@@ -305,6 +424,7 @@
                     onKodePosSearch();
                 }
             });
+            document.getElementById('input-bebas').addEventListener('input', onBebasSearch);
             loadData();
         });
 
@@ -327,6 +447,7 @@
                     }
 
                     buildKecamatanLookup();
+                    buildBebasIndex();
                     populateProvinsi();
 
                     document.getElementById('status').textContent =
@@ -498,6 +619,71 @@
 
             tbody.innerHTML = rows.join('');
             countEl.textContent = `Ditemukan ${rows.length} kelurahan / desa untuk kode pos ${pos}.`;
+        }
+
+        function buildBebasIndex() {
+            BEBAS_RECORDS = [];
+            for (const [pos, groups] of Object.entries(data.KELURAHAN_NAME_BY_KODE_POS)) {
+                for (const group of groups) {
+                    const kecCode = String(group[0]);
+                    const kabCode = kecCode.slice(0, 4);
+                    const provCode = kecCode.slice(0, 2);
+                    const prov = PROV_CODE_TO_NAME[parseInt(provCode, 10)] || '';
+                    const kab = (data.KABUPATEN_NAME_BY_PROVINSI_CODE[provCode] || [])[parseInt(kabCode.slice(2), 10) - 1] || '';
+                    const kec = (data.KECAMATAN_NAME_BY_KABUPATEN_CODE[kabCode] || [])[parseInt(kecCode.slice(4), 10) - 1] || '';
+                    for (let i = 1; i < group.length; i++) {
+                        BEBAS_RECORDS.push({ pos, kel: group[i], kec, kab, prov });
+                    }
+                }
+            }
+        }
+
+        function onBebasSearch() {
+            const q = document.getElementById('input-bebas').value.trim().toUpperCase();
+            const tbody = document.getElementById('table-bebas');
+            const countEl = document.getElementById('bebas-result-count');
+            tbody.innerHTML = '';
+
+            if (q.length < 4) {
+                countEl.textContent = q.length === 0 ? '' : 'Ketik minimal 4 huruf untuk mulai mencari.';
+                return;
+            }
+            if (!data) return;
+
+            const results = [];
+            for (const rec of BEBAS_RECORDS) {
+                // only search on Kelurahan or Kecataman
+                //if (rec.kel.includes(q) || rec.kec.includes(q) || rec.kab.includes(q) || rec.prov.includes(q)) {
+                if (rec.kel.includes(q) || rec.kec.includes(q)) {
+                    results.push(rec);
+                }
+            }
+            results.sort((a, b) =>
+                a.prov.localeCompare(b.prov) || a.kab.localeCompare(b.kab) ||
+                a.kec.localeCompare(b.kec) || Number(a.pos) - Number(b.pos) ||
+                a.kel.localeCompare(b.kel)
+            );
+
+            const MAX = 1000;
+            const shown = results.slice(0, MAX);
+            const rows = shown.map((rec, index) => `<tr>
+                <td>${index + 1}</td>
+                <td>${rec.pos}</td>
+                <td>${titleCase(rec.kel)}</td>
+                <td class="combined">${titleCase(rec.kec)}<br>${titleCase(rec.kab)}<br>${titleCase(rec.prov)}</td>
+                <td class="kec">${titleCase(rec.kec)}</td>
+                <td class="kab">${titleCase(rec.kab)}</td>
+                <td class="prov">${titleCase(rec.prov)}</td>
+            </tr>`);
+            tbody.innerHTML = rows.join('');
+
+            if (results.length === 0) {
+                countEl.textContent = `Tidak ada hasil untuk "${q}".`;
+            } else if (shown.length < results.length) {
+                countEl.textContent = `Ditemukan ${results.length} hasil untuk "${q}" — menampilkan ${shown.length} pertama.`;
+            } else {
+                countEl.textContent = `Ditemukan ${results.length} kelurahan / desa untuk "${q}".`;
+            }
         }
 
         function pad2(num) {
