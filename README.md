@@ -16,4 +16,4 @@ Kode Pos: Kecamatan
 Pakai Javascript untuk link: Kecamatan -> Kabupaten -> Provinsi
 
 #### Demo
-https://www.nomorsuper.com/info/kode-pos
+[https://www.nomorsuper.com/info/kode-pos](https://hmaxf.github.io/kode_pos_indonesia/)
